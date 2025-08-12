@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Login + Pokémon</title>
+  <style>
+    /* Estilos generales */
+    body {
+      background-color: #eef7fd;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      width: 350px;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
+
+    button {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #0056b3;
+    }
+
+    .g-recaptcha {
+      margin: 15px auto;
+      display: flex;
+      justify-content: center;
+    }
+
+    #pokemon-section {
+      display: none;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+
+    img {
+      width: 150px;
+      margin-top: 10px;
+    }
+
+    .fade-out {
+      animation: fadeOut 0.6s forwards;
+    }
+
+    @keyframes fadeOut {
+      to {
+        opacity: 0;
+        transform: scale(0.95);
+        visibility: hidden;
+        height: 0;
+        margin: 0;
+        padding: 0;
+      }
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    #error {
+      color: red;
+      margin-top: 10px;
+    }
+  </style>
+
+  <!-- Carga el script de Google reCAPTCHA de prueba -->
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+</head>
+<body>
+
+  <!-- Contenedor del formulario de login -->
+  <div class="container" id="login-form">
+    <h2>Iniciar Sesión</h2>
+    <input type="email" id="email" placeholder="Correo electrónico">
+    <input type="password" id="password" placeholder="Contraseña">
+
+    <!-- Clave pública de reCAPTCHA de prueba (siempre válida) -->
+    <div class="g-recaptcha" data-sitekey="6LeIxAcTAAAAAJcZVRqyHh71UMIEGNQ_MXjiZKhI"></div>
+
+    <button onclick="login()">Entrar</button>
+    <div id="error"></div>
+  </div>
+
+  <!-- Sección para buscar Pokémon -->
+  <div class="container" id="pokemon-section">
+    <h2>Buscar Pokémon</h2>
+    <input type="text" id="pokemon-name" placeholder="Escribe un nombre (ej: pikachu)">
+    <button onclick="buscarPokemon()">Buscar</button>
+    <div id="resultado"></div>
+  </div>
+
+  <script>
+    // Usuario válido para acceder
+    const usuarioValido = {
+      email: 'johanymoreno@gmail.com',
+      password: '1234567'
+    };
+
+    // Función de login
+    function login() {
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const captcha = grecaptcha.getResponse();
+      const error = document.getElementById('error');
+
+      // Validaciones básicas
+      if (!email || !password) {
+        error.textContent = "Completa todos los campos.";
+        return;
+      }
+
+      if (captcha.length === 0) {
+        error.textContent = "Completa el reCAPTCHA.";
+        return;
+      }
+
+      // Validación de usuario
+      if (email === usuarioValido.email && password === usuarioValido.password) {
+        // Oculta login con animación
+        const loginForm = document.getElementById('login-form');
+        loginForm.classList.add('fade-out');
+        setTimeout(() => {
+          loginForm.style.display = 'none';
+          document.getElementById('pokemon-section').style.display = 'block';
+        }, 600);
+      } else {
+        error.textContent = "Usuario o contraseña incorrectos.";
+      }
+    }
+
+    // Función para buscar Pokémon en la API
+    async function buscarPokemon() {
+      const nombre = document.getElementById('pokemon-name').value.trim().toLowerCase();
+      const resultado = document.getElementById('resultado');
+      resultado.innerHTML = "Buscando...";
+
+      try {
+        const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${nombre}`);
+        if (!response.ok) throw new Error("No encontrado");
+
+        const data = await response.json();
+        const tipos = data.types.map(t => t.type.name).join(', ');
+
+        resultado.innerHTML = `
+          <h3>${data.name.toUpperCase()}</h3>
+          <img src="${data.sprites.front_default}" alt="${data.name}">
+          <p><strong>Tipo:</strong> ${tipos}</p>
+          <p><strong>Peso:</strong> ${data.weight} kg</p>
+        `;
+      } catch (err) {
+        resultado.innerHTML = "<p style='color: red;'>Pokémon no encontrado. Intenta con otro nombre.</p>";
+      }
+    }
+  </script>
+</body>
+</html>
